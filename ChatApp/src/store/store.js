@@ -1,9 +1,10 @@
- import React from 'react'
- 
- function Store() {
-   return (
-     <div>Store</div>
-   )
- }
- 
- export default Store
+import { configureStore } from '@reduxjs/toolkit';
+import authReducer from './authSlice';
+import chatReducer from './chatSlice';
+
+export const store = configureStore({
+  reducer: {
+    auth: authReducer,
+    chat: chatReducer,
+  },
+});
