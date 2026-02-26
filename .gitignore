@@ -1,1 +1,3 @@
 ChatApp/.env
+node_modules
+.env
