@@ -5,7 +5,7 @@ export const messagesService = {
   async sendMessage(senderId, receiverId, message, fileId = null) {
     try {
       // Validate collection ID
-      if (!MESSAGES_COLLECTION_ID || MESSAGES_COLLECTION_ID === 'undefined') {
+      if (!DATABASE_ID || !MESSAGES_COLLECTION_ID || MESSAGES_COLLECTION_ID === 'undefined') {
         console.error('MESSAGES_COLLECTION_ID is not configured properly');
         throw new Error('Collection ID not configured');
       }
@@ -14,7 +14,7 @@ export const messagesService = {
         senderId,
         receiverId,
         message,
-        createdAt: new Date().toISOString(),
+        createAt: new Date().toISOString(),
       };
 
       if (fileId) {
@@ -37,7 +37,7 @@ export const messagesService = {
   async getMessages(userId1, userId2) {
     try {
       // Validate collection ID
-      if (!MESSAGES_COLLECTION_ID || MESSAGES_COLLECTION_ID === 'undefined') {
+      if (!DATABASE_ID || !MESSAGES_COLLECTION_ID || MESSAGES_COLLECTION_ID === 'undefined') {
         console.error('MESSAGES_COLLECTION_ID is not configured properly');
         return [];
       }
@@ -53,7 +53,7 @@ export const messagesService = {
             Query.equal('receiverId', userId1)
           ])
         ]),
-        Query.orderAsc('createdAt')
+        Query.orderAsc('createAt')
       ];
 
       const response = await databases.listDocuments(
@@ -64,7 +64,7 @@ export const messagesService = {
 
       return response.documents || [];
     } catch (error) {
-      console.log("Error fetching messages:",error);
+      console.log("Error fetching messages:", error);
       return [];
     }
   },

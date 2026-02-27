@@ -1,6 +1,5 @@
- import React, { useEffect} from 'react';
+import React, { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { useNavigate } from 'react-router-dom';
 import UserList from '../components/Sidebar/UserList';
 import ChatWindow from '../components/Chat/ChatWindow';
 import MessageInput from '../components/Chat/MessageInput';
@@ -12,19 +11,8 @@ import toast from 'react-hot-toast';
 
 const Chat = () => {
   const dispatch = useDispatch();
-  const navigate = useNavigate();
-  const { user, isAuthenticated, loading } = useAuth();
   const { messages, selectedUser } = useSelector((state) => state.chat);
- // const [typingUsers, setTypingUsers] = useState([]);
-
-  // Redirect if not authenticated
-  useEffect(() => {
-    if (!loading && !isAuthenticated) {
-      navigate('/login');
-    }
-  }, [isAuthenticated, loading, navigate]);
-
-  // Subscribe to real-time messages
+  const { user } = useAuth();
   useRealtime(user, selectedUser);
 
   // Fetch messages when selected user changes
@@ -40,7 +28,7 @@ const Chat = () => {
     try {
       await dispatch(sendMessage(messageData)).unwrap();
     } catch (error) {
-      toast.error('Failed to send message' , error);
+      toast.error('Failed to send message', error);
     }
   };
 
@@ -50,18 +38,10 @@ const Chat = () => {
     console.log('Typing:', isTyping);
   };
 
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
-      </div>
-    );
-  }
-
   return (
     <div className="h-screen flex">
       <UserList />
-      
+
       <div className="flex-1 flex flex-col">
         {selectedUser ? (
           <>
@@ -76,9 +56,9 @@ const Chat = () => {
                 </div>
               </div>
             </div>
-            
+
             <ChatWindow messages={messages} currentUser={user} />
-            
+
             <MessageInput
               onSendMessage={handleSendMessage}
               onTyping={handleTyping}

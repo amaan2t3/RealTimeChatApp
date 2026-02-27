@@ -1,4 +1,4 @@
- import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
+import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import { authService } from '../services/auth';
 
 export const loginUser = createAsyncThunk(
@@ -38,6 +38,7 @@ const authSlice = createSlice({
   initialState: {
     user: null,
     loading: false,
+    initialized: false, // Track if initial auth check is done
     error: null,
     isAuthenticated: false,
   },
@@ -57,6 +58,7 @@ const authSlice = createSlice({
         state.loading = false;
         state.user = action.payload.user;
         state.isAuthenticated = true;
+        state.initialized = true; // Mark as initialized after login
       })
       .addCase(loginUser.rejected, (state, action) => {
         state.loading = false;
@@ -82,9 +84,19 @@ const authSlice = createSlice({
         state.isAuthenticated = false;
       })
       // Get current user
+      .addCase(getCurrentUser.pending, (state) => {
+        state.loading = true;
+      })
       .addCase(getCurrentUser.fulfilled, (state, action) => {
+        state.loading = false;
         state.user = action.payload;
         state.isAuthenticated = !!action.payload;
+        state.initialized = true; // Initial auth check done
+      })
+      .addCase(getCurrentUser.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.error.message;
+        state.initialized = true; // Even if it fails, it's "initialized"
       });
   },
 });

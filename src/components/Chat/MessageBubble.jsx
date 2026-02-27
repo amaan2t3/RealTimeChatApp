@@ -54,7 +54,7 @@ const MessageBubble = ({ message, isOwnMessage, senderName }) => {
         {message.message && <p className="text-sm">{message.message}</p>}
         {renderFileContent()}
         <p className="text-xs text-gray-300 mt-1">
-          {format(new Date(message.createdAt), 'hh:mm a')}
+          {format(new Date(message.createAt), 'hh:mm a')}
         </p>
       </div>
     </div>

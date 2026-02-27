@@ -30,7 +30,7 @@ const ChatWindow = ({ messages, currentUser }) => {
       return groups;
     }
     messages.forEach((message) => {
-      const date = format(new Date(message.createdAt), 'MMMM ,d, yyyy');
+      const date = format(new Date(message.createAt), 'MMMM ,d, yyyy');
       if (!groups[date]) {
         groups[date] = [];
       }

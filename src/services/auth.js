@@ -1,4 +1,5 @@
-import { account, ID } from './appwrite';
+import { account, databases, DATABASE_ID, ID, Query } from './appwrite';
+import conf from '../conf/conf';
 
 export const authService = {
   // Register new user
@@ -11,14 +12,33 @@ export const authService = {
           await account.get();
           // Session exists, delete it first
           await account.deleteSession('current');
-        } catch (err) {
+        } catch {
           // No active session, proceed
         }
         await this.login(email, password);
+
+        // Sync user to database collection for listing
+        if (conf.appwriteUsersCollectionId) {
+          try {
+            await databases.createDocument(
+              DATABASE_ID,
+              conf.appwriteUsersCollectionId,
+              user.$id, // Use the user's ID from Appwrite Account
+              {
+                name: name,
+                email: email,
+                userId: user.$id
+              }
+            );
+          } catch (dbError) {
+            console.error("Failed to sync user to database:", dbError);
+            // We don't throw here to allow registration to succeed even if sync fails
+          }
+        }
       }
       return user;
     } catch (error) {
-      console.log("user register error:",error);
+      console.log("user register error:", error);
       throw error;
     }
   },
@@ -31,12 +51,12 @@ export const authService = {
         await account.get();
         // Session exists, delete it first
         await account.deleteSession('current');
-      } catch (err) {
+      } catch {
         // No active session, proceed
       }
       return await account.createEmailPasswordSession(email, password);
     } catch (error) {
-      console.log("user login error:",error);
+      console.log("user login error:", error);
       throw error;
     }
   },
@@ -46,7 +66,7 @@ export const authService = {
     try {
       return await account.deleteSession('current');
     } catch (error) {
-      console.log("user login error:",error);
+      console.log("user login error:", error);
     }
   },
 
@@ -55,7 +75,7 @@ export const authService = {
     try {
       return await account.get();
     } catch (error) {
-              console.log("user login error:",error);
+      console.log("user login error:", error);
 
       return null;
     }
@@ -68,11 +88,28 @@ export const authService = {
     // This is a simplified version
     try {
       const currentUser = await this.getCurrentUser();
-      // You would typically query a users collection here
-      // For now, returning mock data
+      if (!currentUser) return [];
+
+      if (conf.appwriteUsersCollectionId) {
+        try {
+          console.log("Fetching users from:", DATABASE_ID, conf.appwriteUsersCollectionId);
+          const res = await databases.listRows(
+            {
+              databaseId: conf.appwriteDatabaseId,
+              collectionId: conf.appwriteUsersCollectionId
+            },
+            [Query.notEqual('userId', currentUser.$id)]
+          );
+          console.log("Users fetched:", res.documents);
+          return res.documents || [];
+        } catch (err) {
+          console.error("Failed to fetch all users:", err);
+          return [];
+        }
+      }
       return [];
     } catch (error) {
-      console.log("user login error:",error);
+      console.log("user login error:", error);
     }
   }
 };

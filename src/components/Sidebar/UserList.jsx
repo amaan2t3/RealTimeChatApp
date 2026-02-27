@@ -1,12 +1,10 @@
- import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { setSelectedUser, setUsers } from '../../store/chatSlice';
 import UserListItem from './UserListItem';
-import { databases, DATABASE_ID } from '../../services/appwrite';
-import conf from '../../conf/conf';
 import { LogOut, Users } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
-//import { authService } from '../../services/auth';
+import { authService } from '../../services/auth';
 import toast from 'react-hot-toast';
 
 const UserList = () => {
@@ -17,34 +15,13 @@ const UserList = () => {
 
   useEffect(() => {
     fetchUsers();
-  }, []);
+  }, [user]);
 
   const fetchUsers = async () => {
     try {
       setLoading(true);
-      // Try to fetch real users from an Appwrite collection if configured
-      if (conf.appwriteUsersCollectionId && conf.appwriteUsersCollectionId !== 'undefined') {
-        try {
-          const res = await databases.listDocuments(DATABASE_ID, conf.appwriteUsersCollectionId);
-          const fetched = (res && res.documents) ? res.documents.filter((u) => u.$id !== user?.$id) : [];
-          dispatch(setUsers(fetched));
-          return;
-        } catch (err) {
-          // fallback to mock if fetch fails
-          // eslint-disable-next-line no-console
-          console.warn('Failed to fetch users from Appwrite, falling back to mock users', err);
-        }
-      }
-
-      // Fallback mock users
-      const mockUsers = [
-        { $id: 'user1', name: 'John Doe', email: 'john@example.com' },
-        { $id: 'user2', name: 'Jane Smith', email: 'jane@example.com' },
-        { $id: 'user3', name: 'Bob Johnson', email: 'bob@example.com' },
-      ].filter((u) => u.$id !== user?.$id);
-
-      // Ensure dispatch only receives an array
-      dispatch(setUsers(Array.isArray(mockUsers) ? mockUsers : []));
+      const fetchedUsers = await authService.getAllUsers();
+      dispatch(setUsers(fetchedUsers));
     } catch (error) {
       console.error('Failed to load users', error);
       toast.error('Failed to load users');
@@ -74,7 +51,7 @@ const UserList = () => {
             <LogOut size={18} className="text-gray-600" />
           </button>
         </div>
-        
+
         {/* Current user info */}
         <div className="mt-3 flex items-center space-x-3">
           <div className="w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center text-white font-semibold">
@@ -92,21 +69,21 @@ const UserList = () => {
           <div className="flex justify-center items-center h-32">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
           </div>
+        ) : (
+          (users && users.length > 0) ? (
+            users.map((u) => (
+              <UserListItem
+                key={u.$id}
+                user={u}
+                isSelected={selectedUser?.$id === u.$id}
+                isOnline={Array.isArray(onlineUsers) && onlineUsers.includes(u.$id)}
+                onClick={() => handleUserSelect(u)}
+              />
+            ))
           ) : (
-            (users && users.length > 0) ? (
-              users.map((u) => (
-                <UserListItem
-                  key={u.$id}
-                  user={u}
-                  isSelected={selectedUser?.$id === u.$id}
-                  isOnline={Array.isArray(onlineUsers) && onlineUsers.includes(u.$id)}
-                  onClick={() => handleUserSelect(u)}
-                />
-              ))
-            ) : (
-              <div className="p-4 text-center text-gray-500">No users available</div>
-            )
-          )}
+            <div className="p-4 text-center text-gray-500">No users available</div>
+          )
+        )}
       </div>
     </div>
   );

@@ -4,13 +4,16 @@ import { useNavigate } from 'react-router-dom';
 import { getCurrentUser, logoutUser } from '../store/authSlice';
 
 export const useAuth = () => {
+  const { user, loading, isAuthenticated, initialized } = useSelector((state) => state.auth);
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  const { user, loading, isAuthenticated } = useSelector((state) => state.auth);
 
   useEffect(() => {
-    dispatch(getCurrentUser());
-  }, [dispatch]);
+    // Only fetch if not already initialized
+    if (!initialized && !loading) {
+      dispatch(getCurrentUser());
+    }
+  }, [dispatch, initialized, loading]);
 
   const logout = async () => {
     await dispatch(logoutUser());
@@ -21,6 +24,7 @@ export const useAuth = () => {
     user,
     loading,
     isAuthenticated,
+    initialized,
     logout,
   };
 };
